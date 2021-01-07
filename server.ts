@@ -71,6 +71,8 @@ app.use("/generate", async (req, res) => {
             "Your resource was generated and will be deleted after you access it or after 30 seconds.",
           resourceLink: `${baseUrl}/resource/${fileName}`,
         });
+        
+        await browser.close();
         // Delete file after 30 seconds
         deleteFile(filePath, 30000);
         break;
@@ -88,8 +90,8 @@ app.use("/generate", async (req, res) => {
 });
 
 app.get("/resource/:name", (req, res) => {
-  const name = req.params.name;
-  const filePath = path.resolve(__dirname, "temp", name);
+  const name = req.params.name as string;
+  const filePath = path.resolve("temp", name);
   try {
     res.sendFile(filePath);
     // Delete file after sending to client
