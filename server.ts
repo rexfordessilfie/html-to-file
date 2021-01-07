@@ -21,9 +21,9 @@ const parseUrl: any = (url: string) => {
 };
 
 const deleteFile: any = (path: string, timeout: number) => {
-  console.log("Deleting file", path);
   setTimeout(() => {
     if (fs.existsSync(path)) {
+      console.log("Deleting file", path);
       fs.unlink(path, (error) => {
         if (error) {
           console.log("File could not be deleted", error);
