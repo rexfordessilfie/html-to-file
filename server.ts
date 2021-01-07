@@ -5,8 +5,13 @@ import * as fs from "fs";
 
 const app = express();
 const port = process.env.PORT || 4000;
+const dumpDirectory = "./temp";
 
 app.set("view engine", "ejs");
+
+if (!fs.existsSync(dumpDirectory)) {
+  fs.mkdirSync(dumpDirectory);
+}
 
 const parseUrl: any = (url: string) => {
   const validUrlPattern = /^(http|https):\/\/www\..*\..*/;
@@ -56,7 +61,7 @@ app.use("/generate", async (req, res) => {
       case "image": {
         const { host } = parseUrl(url);
         const fileName = `${host}${Date.now()}.png`;
-        const filePath = `./temp/${fileName}`;
+        const filePath = `${dumpDirectory}/${fileName}`;
         await page.screenshot({
           path: filePath,
         });
@@ -71,7 +76,7 @@ app.use("/generate", async (req, res) => {
             "Your resource was generated and will be deleted after you access it or after 30 seconds.",
           resourceLink: `${baseUrl}/resource/${fileName}`,
         });
-        
+
         await browser.close();
         // Delete file after 30 seconds
         deleteFile(filePath, 30000);
@@ -91,7 +96,7 @@ app.use("/generate", async (req, res) => {
 
 app.get("/resource/:name", (req, res) => {
   const name = req.params.name as string;
-  const filePath = path.resolve("temp", name);
+  const filePath = path.resolve(dumpDirectory, name);
   try {
     res.sendFile(filePath);
     // Delete file after sending to client
