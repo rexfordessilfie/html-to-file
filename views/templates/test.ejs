@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test for HTML File Generator</title>
+</head>
+
+<body>
+    <h2>Welcome to HTML File Generator</h2>
+    <p id='message'></p>
+
+    <img id='my-img' src='' />
+</body>
+
+
+<script>
+    const paramString = window.location.href.split('?')[1]
+    const messageElement = document.getElementById('message')
+    messageElement.innerText = 'Your image is loading...'
+    const image = fetch(`http://localhost:4000/generate/?${paramString}`).then(response => {
+        return response.json()
+    }).then(data => {
+        console.log(data)
+        let imgElement = document.getElementById('my-img')
+        imgElement.src = data.resourceLink
+        messageElement.innerText = 'Your image is ready!'
+    }).catch((error) => console.log(error))
+</script>
+
+
+<style>
+    body {
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        margin: 0 auto;
+        padding: 16px 5vw;
+    }
+</style>
+
+</html>
