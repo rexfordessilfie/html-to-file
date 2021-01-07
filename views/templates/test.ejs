@@ -1,41 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Test for HTML File Generator</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <h2>Welcome to HTML File Generator</h2>
-    <p id='message'></p>
+    <div class="content">
+      <p id="message"></p>
+      <img id="my-img" src="" />
+    </div>
+  </body>
 
-    <img id='my-img' src='' />
-</body>
-
-
-<script>
+  <script>
     const paramString = window.location.href.split('?')[1]
     const messageElement = document.getElementById('message')
-    messageElement.innerText = 'Your image is loading...'
+    messageElement.innerText = 'Your image is loading.'                 messageElement.style.textAlign = 'center'
     const image = fetch(`http://localhost:4000/generate/?${paramString}`).then(response => {
         return response.json()
     }).then(data => {
+        messageElement.innerText = 'Your image is ready!'
         console.log(data)
         let imgElement = document.getElementById('my-img')
         imgElement.src = data.resourceLink
-        messageElement.innerText = 'Your image is ready!'
-    }).catch((error) => console.log(error))
-</script>
+    }).catch((error) => {
+        console.log(error)
+        messageElement.innerText = "Sorry, an error occurred"
+    })
+  </script>
 
-
-<style>
-    body {
-        font-family: Verdana, Geneva, Tahoma, sans-serif;
-        margin: 0 auto;
-        padding: 16px 5vw;
+  <style>
+    html {
+      height: 100%;
+      width: 100%;
     }
-</style>
-
+    body {
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+      align-items: center;
+      margin: 0 auto;
+      padding: 16px 5vw;
+    }
+  </style>
 </html>
