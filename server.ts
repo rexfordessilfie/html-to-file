@@ -22,15 +22,15 @@ const parseUrl: any = (url: string) => {
 
 const deleteFile: any = (path: string, timeout: number) => {
   console.log("Deleting file", path);
-  setTimeout(
-    () =>
+  setTimeout(() => {
+    if (fs.existsSync(path)) {
       fs.unlink(path, (error) => {
         if (error) {
           console.log("File could not be deleted", error);
         }
-      }),
-    timeout
-  );
+      });
+    }
+  }, timeout);
 };
 
 app.use("/template/:name", (req, res) => {
