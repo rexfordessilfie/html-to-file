@@ -67,9 +67,9 @@ app.use("/generate", async (req, res) => {
         });
 
         const baseUrl =
-          process.env.NODE_ENV === "development"
-            ? `http://localhost:${port}`
-            : process.env.BASE_URL;
+          process.env.NODE_ENV === "production"
+            ? process.env.BASE_URL
+            : `http://localhost:${port}`;
         res.send({
           success: true,
           message:
