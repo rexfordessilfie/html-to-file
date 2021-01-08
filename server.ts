@@ -59,7 +59,9 @@ app.use("/generate", async (req, res) => {
       return;
     }
 
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"], // should allow puppeteer to work in heroku
+    });
     const page = await browser.newPage();
     await page.goto(url);
 
