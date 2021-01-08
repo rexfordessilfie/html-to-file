@@ -7,6 +7,11 @@ const app = express();
 const port = process.env.PORT || 4000;
 const dumpDirectory = "./temp";
 
+const baseUrl =
+  process.env.NODE_ENV === "production"
+    ? process.env.BASE_URL
+    : `http://localhost:${port}`;
+
 app.set("view engine", "ejs");
 
 if (!fs.existsSync(dumpDirectory)) {
@@ -40,7 +45,8 @@ const deleteFile: any = (path: string, timeout: number) => {
 
 app.use("/template/:name", (req, res) => {
   const name = req.params.name as string;
-  res.render(`templates/${name}`, req.body);
+  const data = { ...req.body, baseUrl };
+  res.render(`templates/${name}`, data);
 });
 
 app.use("/generate", async (req, res) => {
@@ -66,10 +72,6 @@ app.use("/generate", async (req, res) => {
           path: filePath,
         });
 
-        const baseUrl =
-          process.env.NODE_ENV === "production"
-            ? process.env.BASE_URL
-            : `http://localhost:${port}`;
         res.send({
           success: true,
           message:

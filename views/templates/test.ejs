@@ -12,14 +12,17 @@
       <p id="message"></p>
       <img id="my-img" src="" />
     </div>
-  </body>
 
+    <div id="url-div" data-url=<%= baseUrl %>></div>  
+  </body>
   <script>
+    const myBaseUrl = document.getElementById('url-div').dataset.url
+    console.log(myBaseUrl)
     const paramString = window.location.href.split('?')[1]
     const messageElement = document.getElementById('message')
     messageElement.innerText = 'Your image is loading...'                 
     messageElement.style.textAlign = 'center'
-    const image = fetch(`http://localhost:4000/generate/?${paramString}`).then(response => {
+    const image = fetch(`${myBaseUrl}/generate/?${paramString}`).then(response => {
         return response.json()
     }).then(data => {
         messageElement.innerText = 'Your image is ready!'
