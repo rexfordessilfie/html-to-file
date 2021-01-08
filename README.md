@@ -4,6 +4,13 @@ The goal for this project is to be able to convert any html page into a file, or
 
 File types that are currently supported are images (.png). Pdfs will be added soon.
 
+## Usage
+This service is currently hosted on Heroku here: https://html-to-file.herokuapp.com, and with the following endpoints:
+- /generate?url=<insert-url\>&type=<image|pdf\>: This generates a file from the webpage for the specified url and responds with a link to the file. 
+  
+  Files are deleted immediately after the link is accessed, or 30 seconds after creation.
+
+
 ## Development
 Here are the steps to get you up and running in a development environment:
 1. Install `node` (and `npm`) if you haven't already from [here](https://nodejs.org/en/download/), as well as `tsc`, `ts-node` and `nodemon`, using
@@ -30,4 +37,7 @@ When deployed, the service can be started with the command `npm run start`, whic
 
 ## Demo
 To demo this locally, start the server and enter this url into a browser
-> http://localhost:4000/template/test?url=<your-url\>&type=image
+> http://localhost:4000/template/test?url=http://www.google.com&type=image
+
+To demo on live heroku site, enter this url into browser
+> https://html-to-file.herokuapp.com/template/test?url=http://www.google.com&type=image
