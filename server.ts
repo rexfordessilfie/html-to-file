@@ -1,96 +1,63 @@
 import * as express from "express";
-import * as puppeteer from "puppeteer";
 import * as path from "path";
-import * as fs from "fs";
+
+import {
+  deleteFileAfterTimeout,
+  ensureDirectoryExists,
+  generateFileNameFromUrl,
+} from "./util/helpers";
+import { HtmlToFileGenerator, PuppeteerGenerator } from "./util/generators";
+import { checkValidUrl } from "./middleware";
+
+const PORT = process.env.PORT || 4000;
+const DUMP_DIRECTORY = path.resolve("./temp");
+const PUBLIC_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.PUBLIC_URL
+    : `http://localhost:${PORT}`;
 
 const app = express();
-const port = process.env.PORT || 4000;
-const dumpDirectory = "./temp";
-
-const baseUrl =
-  process.env.NODE_ENV === "production"
-    ? process.env.BASE_URL
-    : `http://localhost:${port}`;
-
 app.set("view engine", "ejs");
-
-if (!fs.existsSync(dumpDirectory)) {
-  fs.mkdirSync(dumpDirectory);
-}
-
-const parseUrl: any = (url: string) => {
-  const validUrlPattern = /^(http|https):\/\/www\..*\..*/;
-  if (!validUrlPattern.test(url)) {
-    throw new Error("Invalid url. Expected http(s)://www.domain.com");
-  }
-
-  const domain = url.split(".")[1] as string;
-  const urlData = new URL(url);
-  const host = urlData.host;
-  return { host, domain };
-};
-
-const deleteFile: any = (path: string, timeout: number) => {
-  setTimeout(() => {
-    if (fs.existsSync(path)) {
-      console.log("Deleting file", path);
-      fs.unlink(path, (error) => {
-        if (error) {
-          console.log("File could not be deleted", error);
-        }
-      });
-    }
-  }, timeout);
-};
 
 app.use("/template/:name", (req, res) => {
   const name = req.params.name as string;
-  const data = { ...req.body, baseUrl };
+  const data = { ...req.body, baseUrl: PUBLIC_URL };
   res.render(`templates/${name}`, data);
 });
 
-app.use("/generate", async (req, res) => {
-  try {
+app.use("/generate", checkValidUrl, async (req, res) => {
+  try {    
     const url = req.query.url as string;
     const type = (req.query.type as string) || "image";
 
-    if (!url) {
-      res.status(403).json({ success: false, message: "invalid url" });
-      return;
+    ensureDirectoryExists(DUMP_DIRECTORY);
+
+    // Generate file name
+    const fileName = generateFileNameFromUrl(url)
+    const fileLocation = DUMP_DIRECTORY
+    
+    let fileGenerator: HtmlToFileGenerator = new PuppeteerGenerator(
+      url,
+      fileName,
+      fileLocation
+    );
+
+    let generatedFileName;
+    if (type === "image") {
+      generatedFileName = await fileGenerator.generateImage();
+    } else if (type === "pdf") {
+      generatedFileName = await fileGenerator.generatePdf();
+    } else {
+      throw "Unrecognized file type";
     }
 
-    const browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"], // should allow puppeteer to work in heroku
+    const generatedFilePath = `${fileLocation}/${generatedFileName}`;
+    deleteFileAfterTimeout(generatedFilePath, 30000); // delete file after 30 seconds
+    res.send({
+      success: true,
+      message: "File successfully generated!",
+      resourceLink: `${PUBLIC_URL}/resource/${generatedFileName}`,
     });
-    const page = await browser.newPage();
-    await page.goto(url);
-
-    switch (type) {
-      case "image": {
-        const { host } = parseUrl(url);
-        const fileName = `${host}${Date.now()}.png`;
-        const filePath = `${dumpDirectory}/${fileName}`;
-        await page.screenshot({
-          path: filePath,
-        });
-
-        res.send({
-          success: true,
-          message:
-            "Your resource was generated and will be deleted after you access it or after 30 seconds.",
-          resourceLink: `${baseUrl}/resource/${fileName}`,
-        });
-
-        await browser.close();
-        // Delete file after 30 seconds
-        deleteFile(filePath, 30000);
-        break;
-      }
-
-      default: {
-        throw Error("Unrecognized type");
-      }
-    }
   } catch (error) {
     res
       .status(400)
@@ -100,19 +67,19 @@ app.use("/generate", async (req, res) => {
 
 app.get("/resource/:name", (req, res) => {
   const name = req.params.name as string;
-  const filePath = path.resolve(dumpDirectory, name);
+  const filePath = path.resolve(DUMP_DIRECTORY, name);
   try {
     res.sendFile(filePath);
     // Delete file after sending to client
-    deleteFile(filePath, 1000);
+    deleteFileAfterTimeout(filePath, 1000);
   } catch (error) {
     res.status(400).send({ error: "File no longer exists" });
   }
 });
 
 try {
-  app.listen(port, () => {
-    console.log(`Server is running on port: ${port}!`);
+  app.listen(PORT, () => {
+    console.log(`Server is running on port: ${PORT}!`);
   });
 } catch (error) {
   console.log(error);
