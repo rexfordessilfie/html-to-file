@@ -6,7 +6,11 @@ import {
   ensureDirectoryExists,
   generateFileNameFromUrl,
 } from "./util/helpers";
-import { HtmlToFileGenerator, PuppeteerGenerator } from "./util/generators";
+import {
+  extractImageOptions,
+  HtmlToFileGenerator,
+  PuppeteerGenerator,
+} from "./util/generators";
 import { checkValidUrl } from "./middleware";
 
 const PORT = process.env.PORT || 4000;
@@ -27,25 +31,25 @@ app.use("/template/:name", (req, res) => {
 
 app.use("/generate", checkValidUrl, async (req, res) => {
   try {    
-    const url = req.query.url as string;
-    const type = (req.query.type as string) || "image";
+    const { url, type = "image" } = req.query;
 
     ensureDirectoryExists(DUMP_DIRECTORY);
 
     // Generate file name
-    const fileName = generateFileNameFromUrl(url)
+    const fileName = generateFileNameFromUrl(url as string);
     const fileLocation = DUMP_DIRECTORY
     
     let fileGenerator: HtmlToFileGenerator = new PuppeteerGenerator(
-      url,
+      url as string,
       fileName,
       fileLocation
     );
 
     let generatedFileName;
-    if (type === "image") {
-      generatedFileName = await fileGenerator.generateImage();
-    } else if (type === "pdf") {
+    if ((type as string) === "image") {
+      const imageOptions = extractImageOptions(req.query);
+      generatedFileName = await fileGenerator.generateImage(imageOptions);
+    } else if ((type as string) === "pdf") {
       generatedFileName = await fileGenerator.generatePdf();
     } else {
       throw "Unrecognized file type";

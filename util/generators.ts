@@ -1,5 +1,16 @@
 import * as puppeteer from "puppeteer";
 
+interface ImageOptions {
+  selector?: string;
+  height?: number;
+  width?: number;
+}
+
+export const extractImageOptions = (obj: any) => {
+  const { selector, width, height } = obj;
+  return { selector, width, height } as ImageOptions;
+};
+
 export interface HtmlToFileGenerator {
   generateImage(options?: any): string | Promise<string>;
   generatePdf(options?: any): string | Promise<string>;
@@ -24,7 +35,8 @@ export class PuppeteerGenerator implements HtmlToFileGenerator {
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     this.page = await this.browser.newPage();
-    await this.page.goto(this.url);
+    // Make sure content has finished loading on page
+    await this.page.goto(this.url, { waitUntil: "networkidle0" });
   }
 
   async tearDown() {
@@ -36,12 +48,14 @@ export class PuppeteerGenerator implements HtmlToFileGenerator {
     try {
       const fileNamePlusExtension = `${this.fileName}.png`;
       await this.setUp();
-      await this.page.screenshot({
+      const processedOptions = await this.processImageOptions(options);
+      const { target, ...screenshotOptions } = processedOptions;
+      await target?.screenshot({
         path: `${this.fileLocation}/${fileNamePlusExtension}`,
-        ...options,
+        ...screenshotOptions,
       });
       await this.tearDown();
-      console.log("[PuppeteerGenerator] Done generating image...");
+      console.log("[PuppeteerGenerator] Done generating image");
       return fileNamePlusExtension;
     } catch (error) {
       throw error;
@@ -58,10 +72,41 @@ export class PuppeteerGenerator implements HtmlToFileGenerator {
         ...options,
       });
       await this.tearDown();
-      console.log("[PuppeteerGenerator] Done generating pdf...");
+      console.log("[PuppeteerGenerator] Done generating pdf.");
       return fileNamePlusExtension;
     } catch (error) {
       throw error;
     }
+  }
+
+  // Page must already be active before handling options
+  async processImageOptions(options: ImageOptions): Promise<any> {
+    console.log("[PuppeteerGenerator] Processing image options...");
+    const { selector, width, height } = options;
+    let processedOptions = {};
+
+    const target = selector ? await this.page.$(selector) : this.page;
+    processedOptions = { ...processedOptions, target };
+
+    if (width) {
+      processedOptions = { ...processedOptions, width };
+    }
+    if (height) {
+      processedOptions = { ...processedOptions, height };
+    }
+    return processedOptions;
+  }
+
+  async resizePage() {
+    // https://petertran.com.au/2018/07/12/blank-images-puppeteer-screenshots-solved/
+    // Resize the viewport to screenshot elements outside of the viewport
+    const newViewport = await this.page.$eval("body", (bodyHandle) => {
+      const boundingBox = bodyHandle.getBoundingClientRect();
+      return {
+        width: Math.ceil(boundingBox.width),
+        height: Math.ceil(boundingBox.height),
+      };
+    });
+    await this.page.setViewport(newViewport);
   }
 }
