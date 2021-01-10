@@ -6,7 +6,13 @@ File types that are currently supported are images (.png). Pdfs will be added so
 
 ## Usage
 This service is currently hosted on Heroku here: https://html-to-file.herokuapp.com, and with the following endpoints:
-- /generate?url=<insert-url\>&type=<image|pdf\>: This generates a file from the webpage for the specified url and responds with a link to the file. 
+
+1. **`/generate:`** This generates a file from the webpage for the specified url and responds with a link to the file.
+  The supported query params for this route are:
+    - url (required): the url of the page to be converted into a file
+    - type: defaults to image, unless otherwise specified
+    - selector (image only): a css selector that targets an html element to be captured
+
   
   Files are deleted immediately after the link is accessed, or 30 seconds after creation.
 
