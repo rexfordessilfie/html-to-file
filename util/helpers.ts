@@ -45,3 +45,8 @@ export const generateFileNameFromUrl = (url: string): string => {
   // NB: the file extension will be added by the generator
   return fileName;
 };
+
+// https://stackoverflow.com/questions/37764665/typescript-sleep
+export const delay = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
