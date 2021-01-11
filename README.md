@@ -12,6 +12,8 @@ This service is currently hosted on Heroku here: https://html-to-file.herokuapp.
     - url (required): the url of the page to be converted into a file
     - type: defaults to image, unless otherwise specified
     - selector (image only): a css selector that targets an html element to be captured
+    - respondWithResource: if added, redirects to url that opens file in browser
+    - respondWithDownload: if added, redirects to url that downloads file in browser
 
   
   Files are deleted immediately after the link is accessed, or 30 seconds after creation.
