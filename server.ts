@@ -31,7 +31,12 @@ app.use("/template/:name", (req, res) => {
 
 app.use("/generate", checkValidUrl, async (req, res) => {
   try {
-    const { url, type = "image" } = req.query;
+    const {
+      url,
+      type = "image",
+      respondWithResource = false,
+      respondWithDownload = false,
+    } = req.query;
 
     ensureDirectoryExists(DUMP_DIRECTORY);
 
@@ -56,12 +61,22 @@ app.use("/generate", checkValidUrl, async (req, res) => {
 
     const generatedFilePath = `${fileLocation}/${generatedFileName}`;
     deleteFileAfterTimeout(generatedFilePath, 30000); // delete file after 30 seconds
-    res.send({
-      success: true,
-      message: "File successfully generated!",
-      resourceLink: `${PUBLIC_URL}/resource/${generatedFileName}`,
-      downloadLink: `${PUBLIC_URL}/download/${generatedFileName}`,
-    });
+
+    const internalResourcePath = `/resource/${generatedFileName}`;
+    const internalDownloadPath = `/download/${generatedFileName}`;
+
+    if (respondWithResource) {
+      res.redirect(internalResourcePath);
+    } else if (respondWithDownload) {
+      res.redirect(internalDownloadPath);
+    } else {
+      res.send({
+        success: true,
+        message: "File successfully generated!",
+        resourceLink: `${PUBLIC_URL}${internalResourcePath}`,
+        downloadLink: `${PUBLIC_URL}${internalDownloadPath}`,
+      });
+    }
   } catch (error) {
     res
       .status(400)
