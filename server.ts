@@ -30,15 +30,14 @@ app.use("/template/:name", (req, res) => {
 });
 
 app.use("/generate", checkValidUrl, async (req, res) => {
-  try {    
+  try {
     const { url, type = "image" } = req.query;
 
     ensureDirectoryExists(DUMP_DIRECTORY);
 
     // Generate file name
     const fileName = generateFileNameFromUrl(url as string);
-    const fileLocation = DUMP_DIRECTORY
-    
+    const fileLocation = DUMP_DIRECTORY;
     let fileGenerator: HtmlToFileGenerator = new PuppeteerGenerator(
       url as string,
       fileName,
@@ -61,6 +60,7 @@ app.use("/generate", checkValidUrl, async (req, res) => {
       success: true,
       message: "File successfully generated!",
       resourceLink: `${PUBLIC_URL}/resource/${generatedFileName}`,
+      downloadLink: `${PUBLIC_URL}/download/${generatedFileName}`,
     });
   } catch (error) {
     res
@@ -74,6 +74,18 @@ app.get("/resource/:name", (req, res) => {
   const filePath = path.resolve(DUMP_DIRECTORY, name);
   try {
     res.sendFile(filePath);
+    // Delete file after sending to client
+    deleteFileAfterTimeout(filePath, 1000);
+  } catch (error) {
+    res.status(400).send({ error: "File no longer exists" });
+  }
+});
+
+app.get("/download/:name", (req, res) => {
+  const name = req.params.name as string;
+  const filePath = path.resolve(DUMP_DIRECTORY, name);
+  try {
+    res.download(filePath);
     // Delete file after sending to client
     deleteFileAfterTimeout(filePath, 1000);
   } catch (error) {
