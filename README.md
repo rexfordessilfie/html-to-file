@@ -5,10 +5,10 @@ The goal for this project is to be able to convert any html page into a file, or
 File types that are currently supported are images (.png). Pdfs will be added soon.
 
 ## Usage
-This service is currently hosted on Heroku here: https://html-to-file.herokuapp.com, and with the following endpoints:
+This service is currently hosted on Heroku here: https://html-to-file.herokuapp.com/generate?url=https://www.google.com (you may change the url to the one you would like to capture). Here are the services supported endpoints:
 
 1. **`/generate:`** This generates a file from the webpage for the specified url and responds with a link to the file.
-  The supported query params for this route are:
+  The supported query params for this endpoint are:
     - url (required): the url of the page to be converted into a file
     - type: defaults to image, unless otherwise specified
     - selector (image only): a css selector that targets an html element to be captured
