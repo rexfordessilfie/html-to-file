@@ -55,9 +55,8 @@ export class PuppeteerGenerator implements HtmlToFileGenerator {
     await this.page.goto(this.url, { waitUntil: "networkidle0" });
   }
 
-  static async tearDown() {
-    await PuppeteerGeneratorSingleton.browser?.close();
-    PuppeteerGeneratorSingleton.browser = null
+  async tearDown() {
+    this.browser.close()
   }
 
   async generateImage(options: any): Promise<string> {
@@ -71,7 +70,7 @@ export class PuppeteerGenerator implements HtmlToFileGenerator {
         path: `${this.fileLocation}/${fileNamePlusExtension}`,
         ...screenshotOptions,
       });
-      await PuppeteerGeneratorSingleton.tearDown();
+      await this.tearDown();
       console.log("[PuppeteerGenerator] Done generating image");
       return fileNamePlusExtension;
     } catch (error) {
@@ -88,7 +87,7 @@ export class PuppeteerGenerator implements HtmlToFileGenerator {
         path: `${this.fileLocation}/${fileNamePlusExtension}`,
         ...options,
       });
-      await PuppeteerGeneratorSingleton.tearDown();
+      await this.tearDown();
       console.log("[PuppeteerGenerator] Done generating pdf.");
       return fileNamePlusExtension;
     } catch (error) {
@@ -151,7 +150,9 @@ export class PuppeteerGeneratorSingleton
   }
 
   static async tearDown() {
-    await PuppeteerGeneratorSingleton.browser?.close();
+    if (PuppeteerGeneratorSingleton.browser){
+      await PuppeteerGeneratorSingleton.browser.close();
+    }
     PuppeteerGeneratorSingleton.browser = null
   }
 
@@ -163,13 +164,13 @@ export class PuppeteerGeneratorSingleton
 
   async closeBrowserPage (){
     if (this.page){
-      this.page.close()
+      await this.page.close()
     }
   }
 
   async generateImage(url:string, filename:string, options: any): Promise<string> {
     console.log("[PuppeteerGenerator] About to generate image...");
-    const fileWithExtension = ensureFileExtension(filename, '.png')
+    const fileWithExtension = ensureFileExtension(filename, 'png')
     try {
       await this.loadBrowserPage(url);
       const processedOptions = await this.processImageOptions(options);
@@ -178,8 +179,8 @@ export class PuppeteerGeneratorSingleton
         path: fileWithExtension,
         ...screenshotOptions,
       });
-      console.log("[PuppeteerGenerator] Done generating image");
-      this.closeBrowserPage()
+      console.log("[PuppeteerGenerator] Done generating image", {fileWithExtension});
+      // await this.closeBrowserPage()
       return fileWithExtension;
     } catch (error) {
       throw error;
@@ -188,15 +189,15 @@ export class PuppeteerGeneratorSingleton
 
   async generatePdf(url:string, filename:string, options: any): Promise<string> {
     console.log("[PuppeteerGenerator] About to generate pdf...");
-    const fileWithExtension = ensureFileExtension(filename, '.png')
+    const fileWithExtension = ensureFileExtension(filename, 'pdf')
     try {
       await this.loadBrowserPage(url)
       await this.page?.pdf({
         path: ensureFileExtension(filename, '.pdf'),
         ...options,
       });
-      console.log("[PuppeteerGenerator] Done generating pdf.");
-      this.closeBrowserPage()
+      console.log("[PuppeteerGenerator] Done generating pdf."), {fileWithExtension};
+     // await this.closeBrowserPage()
       return fileWithExtension;
     } catch (error) {
       throw error;
