@@ -55,9 +55,8 @@ export const delay = (ms: number) => {
 export const ensureFileExtension = (filename:string, ext:string ) => {
   const splitFile = filename.split('.');
   const currentExt = splitFile[splitFile.length - 1]
-  console.log(currentExt)
   if (currentExt != ext){
-    return filename + ext
+    return `${filename}.${ext}`
   }
   return filename
 }

@@ -54,14 +54,14 @@ app.use("/generate", checkValidUrl, async (req, res) => {
 
     if ((type as string) === "image") {
       const imageOptions = extractImageOptions(req.query);
-      finalFilePath = ensureFileExtension(filePathNoExtension, ".png");
+      finalFilePath = ensureFileExtension(filePathNoExtension, "png");
       await fileGenerator.generateImage(
         url as string,
         finalFilePath,
         imageOptions
       );
     } else if ((type as string) === "pdf") {
-      finalFilePath = ensureFileExtension(filePathNoExtension, ".pdf");
+      finalFilePath = ensureFileExtension(filePathNoExtension, "pdf");
       await fileGenerator.generateImage(url as string, finalFilePath);
     } else {
       throw "Unrecognized file type";
@@ -71,8 +71,8 @@ app.use("/generate", checkValidUrl, async (req, res) => {
 
     const splitFinalPath = finalFilePath.split('/');
     const resourceName = splitFinalPath[splitFinalPath.length -1]
-    const internalResourcePath = `/resource/${resourceName}`;
-    const internalDownloadPath = `/download/${resourceName}`;
+    const internalResourcePath = `/resources/${resourceName}`;
+    const internalDownloadPath = `/downloads/${resourceName}`;
 
     if (respondWithResource) {
       res.redirect(internalResourcePath);
@@ -93,7 +93,7 @@ app.use("/generate", checkValidUrl, async (req, res) => {
   }
 });
 
-app.get("/resource/:name", (req, res) => {
+app.get("/resources/:name", (req, res) => {
   const name = req.params.name as string;
   const filePath = path.resolve(DUMP_DIRECTORY, name);
   try {
@@ -105,7 +105,7 @@ app.get("/resource/:name", (req, res) => {
   }
 });
 
-app.get("/download/:name", (req, res) => {
+app.get("/downloads/:name", (req, res) => {
   const name = req.params.name as string;
   const filePath = path.resolve(DUMP_DIRECTORY, name);
   try {
