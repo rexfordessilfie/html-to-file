@@ -69,8 +69,8 @@ app.use("/generate", checkValidUrl, async (req, res) => {
 
     deleteFileAfterTimeout(finalFilePath, 30000); // delete file after 30 seconds
 
-    const splitFinalPath = finalFilePath.split('/');
-    const resourceName = splitFinalPath[splitFinalPath.length -1]
+    const splitFinalPath = finalFilePath.split("/");
+    const resourceName = splitFinalPath[splitFinalPath.length - 1];
     const internalResourcePath = `/resources/${resourceName}`;
     const internalDownloadPath = `/downloads/${resourceName}`;
 
