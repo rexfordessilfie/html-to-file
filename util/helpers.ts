@@ -53,9 +53,8 @@ export const delay = (ms: number) => {
 
 /** Makes sure that the desired file extension is at the end of the given file name. Appends it if missing */
 export const ensureFileExtension = (filename: string, ext: string) => {
-  const splitFile = filename.split(".");
-  const currentExt = splitFile[splitFile.length - 1];
-  if (currentExt != ext) {
+  const extensionRegex = new RegExp(`${ext}\$`);
+  if (!extensionRegex.test(filename)) {
     return `${filename}.${ext}`;
   }
   return filename;
