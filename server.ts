@@ -4,12 +4,15 @@ import * as path from "path";
 import {
   deleteFileAfterTimeout,
   ensureDirectoryExists,
+  ensureFileExtension,
   generateFileNameFromUrl,
 } from "./util/helpers";
 import {
   extractImageOptions,
   HtmlToFileGenerator,
+  HtmlToFileGeneratorSingleton,
   PuppeteerGenerator,
+  PuppeteerGeneratorSingleton,
 } from "./util/generators";
 import { checkValidUrl } from "./middleware";
 
@@ -41,29 +44,35 @@ app.use("/generate", checkValidUrl, async (req, res) => {
     ensureDirectoryExists(DUMP_DIRECTORY);
 
     // Generate file name
-    const fileName = generateFileNameFromUrl(url as string);
-    const fileLocation = DUMP_DIRECTORY;
-    let fileGenerator: HtmlToFileGenerator = new PuppeteerGenerator(
-      url as string,
-      fileName,
-      fileLocation
-    );
+    let fileGenerator:
+      | HtmlToFileGeneratorSingleton
+      | HtmlToFileGenerator = new PuppeteerGeneratorSingleton();
+    const filename = generateFileNameFromUrl(url as string);
 
-    let generatedFileName;
+    let filePathNoExtension = path.join(DUMP_DIRECTORY, filename);
+    let finalFilePath;
+
     if ((type as string) === "image") {
       const imageOptions = extractImageOptions(req.query);
-      generatedFileName = await fileGenerator.generateImage(imageOptions);
+      finalFilePath = ensureFileExtension(filePathNoExtension, ".png");
+      await fileGenerator.generateImage(
+        url as string,
+        finalFilePath,
+        imageOptions
+      );
     } else if ((type as string) === "pdf") {
-      generatedFileName = await fileGenerator.generatePdf();
+      finalFilePath = ensureFileExtension(filePathNoExtension, ".pdf");
+      await fileGenerator.generateImage(url as string, finalFilePath);
     } else {
       throw "Unrecognized file type";
     }
 
-    const generatedFilePath = `${fileLocation}/${generatedFileName}`;
-    deleteFileAfterTimeout(generatedFilePath, 30000); // delete file after 30 seconds
+    deleteFileAfterTimeout(finalFilePath, 30000); // delete file after 30 seconds
 
-    const internalResourcePath = `/resource/${generatedFileName}`;
-    const internalDownloadPath = `/download/${generatedFileName}`;
+    const splitFinalPath = finalFilePath.split('/');
+    const resourceName = splitFinalPath[splitFinalPath.length -1]
+    const internalResourcePath = `/resource/${resourceName}`;
+    const internalDownloadPath = `/download/${resourceName}`;
 
     if (respondWithResource) {
       res.redirect(internalResourcePath);
