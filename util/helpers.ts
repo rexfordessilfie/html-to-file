@@ -50,3 +50,12 @@ export const generateFileNameFromUrl = (url: string): string => {
 export const delay = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
+
+/** Makes sure that the desired file extension is at the end of the given file name. Appends it if missing */
+export const ensureFileExtension = (filename: string, ext: string) => {
+  const extensionRegex = new RegExp(`${ext}\$`);
+  if (!extensionRegex.test(filename)) {
+    return `${filename}.${ext}`;
+  }
+  return filename;
+};
