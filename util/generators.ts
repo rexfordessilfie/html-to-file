@@ -161,6 +161,7 @@ export class PuppeteerGeneratorSingleton
     await this.page?.goto(url, { waitUntil: "networkidle0" }); // Make sure content has finished loading on page
   }
 
+  /** Closes the browser page. (currently not in use since closing sometimes causes navigation errors) */
   async closeBrowserPage() {
     if (this.page) {
       await this.page.close();
@@ -185,7 +186,6 @@ export class PuppeteerGeneratorSingleton
       console.log("[PuppeteerGenerator] Done generating image", {
         fileWithExtension,
       });
-      // await this.closeBrowserPage()
       return fileWithExtension;
     } catch (error) {
       throw error;
@@ -207,7 +207,6 @@ export class PuppeteerGeneratorSingleton
       });
       console.log("[PuppeteerGenerator] Done generating pdf."),
         { fileWithExtension };
-      // await this.closeBrowserPage()
       return fileWithExtension;
     } catch (error) {
       throw error;
