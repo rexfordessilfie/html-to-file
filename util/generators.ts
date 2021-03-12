@@ -160,6 +160,13 @@ export class PuppeteerGeneratorSingleton
     await this.page?.goto(url, { waitUntil: "networkidle0" }); // Make sure content has finished loading on page
   }
 
+
+  async closeBrowserPage (){
+    if (this.page){
+      this.page.close()
+    }
+  }
+
   async generateImage(url:string, filename:string, options: any): Promise<string> {
     console.log("[PuppeteerGenerator] About to generate image...");
     const fileWithExtension = ensureFileExtension(filename, '.png')
@@ -172,6 +179,7 @@ export class PuppeteerGeneratorSingleton
         ...screenshotOptions,
       });
       console.log("[PuppeteerGenerator] Done generating image");
+      this.closeBrowserPage()
       return fileWithExtension;
     } catch (error) {
       throw error;
@@ -188,6 +196,7 @@ export class PuppeteerGeneratorSingleton
         ...options,
       });
       console.log("[PuppeteerGenerator] Done generating pdf.");
+      this.closeBrowserPage()
       return fileWithExtension;
     } catch (error) {
       throw error;
