@@ -60,7 +60,7 @@ app.use("/generate", async (req, res) => {
       );
     } else if ((type as string) === "pdf") {
       finalFilePath = ensureFileExtension(filePathNoExtension, "pdf");
-      await fileGenerator.generateImage(url as string, finalFilePath);
+      await fileGenerator.generatePdf(url as string, finalFilePath);
     } else {
       throw "Unrecognized file type";
     }

@@ -171,7 +171,7 @@ export class PuppeteerGeneratorSingleton
   async generateImage(
     url: string,
     filename: string,
-    options: any
+    options: any = {}
   ): Promise<string> {
     console.log("[PuppeteerGenerator] About to generate image...");
     const fileWithExtension = ensureFileExtension(filename, "png");
@@ -195,14 +195,14 @@ export class PuppeteerGeneratorSingleton
   async generatePdf(
     url: string,
     filename: string,
-    options: any
+    options: any = {}
   ): Promise<string> {
     console.log("[PuppeteerGenerator] About to generate pdf...");
     const fileWithExtension = ensureFileExtension(filename, "pdf");
     try {
       await this.loadBrowserPage(url);
       await this.page?.pdf({
-        path: ensureFileExtension(filename, ".pdf"),
+        path: fileWithExtension,
         ...options,
       });
       console.log("[PuppeteerGenerator] Done generating pdf."),
