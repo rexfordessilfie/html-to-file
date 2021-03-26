@@ -11,10 +11,8 @@ import {
   extractImageOptions,
   HtmlToFileGenerator,
   HtmlToFileGeneratorSingleton,
-  PuppeteerGenerator,
   PuppeteerGeneratorSingleton,
 } from "./util/generators";
-import { checkValidUrl } from "./middleware";
 
 const PORT = process.env.PORT || 4000;
 const DUMP_DIRECTORY = path.resolve("./temp");
@@ -32,7 +30,7 @@ app.use("/template/:name", (req, res) => {
   res.render(`templates/${name}`, data);
 });
 
-app.use("/generate", checkValidUrl, async (req, res) => {
+app.use("/generate", async (req, res) => {
   try {
     const {
       url,

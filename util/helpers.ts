@@ -26,16 +26,15 @@ export const ensureDirectoryExists = (dirName: string) => {
 
 export const parseUrl = (url: string) => {
   console.log("[Utils] Parsing url...", { url });
-  const validUrlPattern = /^(http|https):\/\/www\..*\..*/;
-  if (!validUrlPattern.test(url)) {
-    throw new Error(
-      "Invalid url. Expected url to match http(s)://www.domain.com"
-    );
-  }
-
-  const domain = url.split(".")[1] as string;
+  // const validUrlPattern = /^(http|https):\/\/www\..*\..*/;
+  // if (!validUrlPattern.test(url)) {
+  //   throw new Error(
+  //     "Invalid url. Expected url to match http(s)://www.domain.com"
+  //   );
+  // }
+  // const domain = url.split(".")[1] as string;
   const urlData = new URL(url);
-  return { host: urlData.host, domain };
+  return { host: urlData.host };
 };
 
 export const generateFileNameFromUrl = (url: string): string => {
