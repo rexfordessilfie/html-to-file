@@ -1,5 +1,6 @@
 import * as express from "express";
 import * as path from "path";
+import * as cors from "cors";
 
 import {
   deleteFileAfterTimeout,
@@ -23,6 +24,7 @@ const PUBLIC_URL =
 
 const app = express();
 app.set("view engine", "ejs");
+app.use(cors({ origin: true, credentials: true }));
 
 app.use("/template/:name", (req, res) => {
   const name = req.params.name as string;
