@@ -14,6 +14,7 @@ import {
   HtmlToFileGeneratorSingleton,
   PuppeteerGeneratorSingleton,
 } from "./util/generators";
+import { checkValidUrl } from "./middleware";
 
 const PORT = process.env.PORT || 4000;
 const DUMP_DIRECTORY = path.resolve("./temp");
@@ -32,7 +33,7 @@ app.use("/template/:name", (req, res) => {
   res.render(`templates/${name}`, data);
 });
 
-app.use("/generate", async (req, res) => {
+app.use("/generate", checkValidUrl, async (req, res) => {
   try {
     const {
       url,
