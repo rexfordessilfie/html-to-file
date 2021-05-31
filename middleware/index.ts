@@ -1,5 +1,5 @@
 export const checkValidUrl = (req: any, res: any, next: Function) => {
-  const { url } = req.body;
+  const { url } = req.query;
   const validUrlPattern = /^(http|https):\/\//;
   try {
     if (!validUrlPattern.test(url)) {
@@ -9,8 +9,7 @@ export const checkValidUrl = (req: any, res: any, next: Function) => {
     next();
   } catch (error) {
     res.status(400).send({
-      success: false,
-      message: error,
+      error,
     });
   }
 };
