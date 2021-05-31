@@ -58,3 +58,23 @@ export const ensureFileExtension = (filename: string, ext: string) => {
   }
   return filename;
 };
+
+export const getQueryString = (queryParams: Record<string, string> = {}) => {
+  const paramPairs = Object.keys(queryParams).map((key) => {
+    return `${key}=${queryParams[key]}`;
+  });
+
+  const queryString = paramPairs.join("&");
+  return queryString;
+};
+
+export const appendQueryParams = (
+  url: string,
+  params: Record<string, string> = {}
+) => {
+  const queryString = getQueryString(params);
+  if (url.includes("?")) {
+    return url + queryString;
+  }
+  return url + "?" + queryString;
+};

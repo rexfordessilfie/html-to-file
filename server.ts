@@ -3,6 +3,7 @@ import * as path from "path";
 import * as cors from "cors";
 
 import {
+  appendQueryParams,
   deleteFileAfterTimeout,
   ensureDirectoryExists,
   ensureFileExtension,
@@ -26,28 +27,29 @@ const PUBLIC_URL =
 const app = express();
 app.set("view engine", "ejs");
 app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
 
-app.use("/template/:name", (req, res) => {
+app.get("/template/:name", (req, res) => {
   const name = req.params.name as string;
-  const data = { ...req.body, baseUrl: PUBLIC_URL };
+  const { fallbackUrl = "" } = req.query;
+  const data = { fallbackUrl, baseUrl: PUBLIC_URL };
   res.render(`templates/${name}`, data);
 });
 
-app.use("/generate", checkValidUrl, async (req, res) => {
+app.post("/generate", checkValidUrl, async (req, res) => {
   try {
     const {
       url,
       type = "image",
       respondWithResource = false,
       respondWithDownload = false,
-    } = req.query;
-
+      fallBackUrl = "",
+    } = req.body;
     ensureDirectoryExists(DUMP_DIRECTORY);
 
     // Generate file name
-    let fileGenerator:
-      | HtmlToFileGeneratorSingleton
-      | HtmlToFileGenerator = new PuppeteerGeneratorSingleton();
+    let fileGenerator: HtmlToFileGeneratorSingleton | HtmlToFileGenerator =
+      new PuppeteerGeneratorSingleton();
     const filename = generateFileNameFromUrl(url as string);
 
     let filePathNoExtension = path.join(DUMP_DIRECTORY, filename);
@@ -80,11 +82,12 @@ app.use("/generate", checkValidUrl, async (req, res) => {
     } else if (respondWithDownload) {
       res.redirect(internalDownloadPath);
     } else {
+      const redirectQuery = fallBackUrl ? `?fallBackUrl=${fallBackUrl}` : "";
       res.send({
         success: true,
         message: "File successfully generated!",
-        resourceLink: `${PUBLIC_URL}${internalResourcePath}`,
-        downloadLink: `${PUBLIC_URL}${internalDownloadPath}`,
+        resourceLink: `${PUBLIC_URL}${internalResourcePath}${redirectQuery}`,
+        downloadLink: `${PUBLIC_URL}${internalDownloadPath}${redirectQuery}`,
       });
     }
   } catch (error) {
@@ -96,9 +99,18 @@ app.use("/generate", checkValidUrl, async (req, res) => {
 
 app.get("/resources/:name", (req, res) => {
   const name = req.params.name as string;
+  const { fallBackUrl = "" } = req.query;
   const filePath = path.resolve(DUMP_DIRECTORY, name);
   try {
-    res.sendFile(filePath);
+    res.sendFile(filePath, (error) => {
+      if (error && fallBackUrl) {
+        const finalUrl = appendQueryParams("/template/resource-not-found", {
+          fallBackUrl: fallBackUrl as string,
+        });
+        res.redirect(finalUrl);
+        return;
+      }
+    });
     // Delete file after sending to client
     deleteFileAfterTimeout(filePath, 1000);
   } catch (error) {
@@ -109,12 +121,33 @@ app.get("/resources/:name", (req, res) => {
 app.get("/downloads/:name", (req, res) => {
   const name = req.params.name as string;
   const filePath = path.resolve(DUMP_DIRECTORY, name);
+  const { fallbackUrl = "" as string } = req.query;
+  console.log({ fallbackUrl });
   try {
-    res.download(filePath);
+    res.download(filePath, (error) => {
+      if (error && fallbackUrl) {
+        const finalUrl = appendQueryParams("/template/resource-not-found", {
+          fallbackUrl: fallbackUrl as string,
+        });
+        res.redirect(finalUrl);
+        return;
+      }
+    });
     // Delete file after sending to client
     deleteFileAfterTimeout(filePath, 1000);
   } catch (error) {
     res.status(400).send({ error: "File no longer exists" });
+  }
+});
+
+app.get("/health", (req, res) => {
+  try {
+    res.send({
+      message: "Up and running!",
+      success: true,
+    });
+  } catch (error) {
+    res.status(400).send({ error: "Currently unavailable" });
   }
 });
 

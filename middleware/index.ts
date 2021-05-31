@@ -1,5 +1,5 @@
 export const checkValidUrl = (req: any, res: any, next: Function) => {
-  const url = req.query.url;
+  const { url } = req.body;
   const validUrlPattern = /^(http|https):\/\//;
   try {
     if (!validUrlPattern.test(url)) {

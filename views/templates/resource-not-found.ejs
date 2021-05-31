@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test for HTML File Generator</title>
+  </head>
+
+  <body>
+    <h1>Resource Not Found</h1>
+    <p>Looks like the resource you are trying to access has been removed or deleted.</p>
+
+    <%if (fallbackUrl) { %>
+            <p>The resource provider would like to redirect you to this link instead. Verify that it is correct and click to access</p> 
+            <a href=<%= fallbackUrl %>><%= fallbackUrl %></a> 
+    <% } else { %>    
+        <p>Please contact the provider of this link if you believe this is a mistake.</p>   
+    <% } %>
+
+   
+
+
+   
+  </body>
+  <script>
+  </script>
+
+  <style>
+    html {
+      height: 100%;
+      width: 100%;
+    }
+    body {
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+      align-items: center;
+      margin: 0 auto;
+      padding: 16px 5vw;
+    }
+  </style>
+</html>
