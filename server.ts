@@ -36,7 +36,7 @@ app.get("/template/:name", (req, res) => {
   res.render(`templates/${name}`, data);
 });
 
-app.post("/generate", checkValidUrl, async (req, res) => {
+app.get("/generate", checkValidUrl, async (req, res) => {
   try {
     const {
       url,
@@ -44,7 +44,7 @@ app.post("/generate", checkValidUrl, async (req, res) => {
       respondWithResource = false,
       respondWithDownload = false,
       fallBackUrl = "",
-    } = req.body;
+    } = req.query;
     ensureDirectoryExists(DUMP_DIRECTORY);
 
     // Generate file name
