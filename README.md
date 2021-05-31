@@ -14,6 +14,7 @@ This service is currently hosted on Heroku here: https://html-to-file.herokuapp.
     - selector (image only): a css selector that targets an html element to be captured
     - respondWithResource: if added, redirects to url that opens file in browser
     - respondWithDownload: if added, redirects to url that downloads file in browser
+    - fallbackUrl: allows you to specify a url that accessors of the link will be shown when they try to access a link to a generated resource that is no longer available. Such a link could be to your custom page allowing the user to regenerate the resource, or directly be a link to regenerate the same resource with this service. Eg. https://html-to-file.herokuapp.com/generate?url=https://www.google.com?fallbackUrl=https://html-to-file.herokuapp.com/generate?url=https://www.google.com
 
   
   Files are deleted immediately after the link is accessed, or 30 seconds after creation.
