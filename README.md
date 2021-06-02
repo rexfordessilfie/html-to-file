@@ -11,11 +11,17 @@ This service is currently hosted on Heroku here: https://html-to-file.herokuapp.
 
 1. **`/generate:`** This generates a file from the webpage for the specified url and responds with a link to the file.
    The supported query params for this endpoint are:
+
    - `url` (required): the url of the page to be converted into a file
    - `type`: defaults to image, unless otherwise specified
    - `selector` (for images only): a css selector that targets an html element to be captured
-   - `respondWithResource`: if 'true', the user will be redirected to the file itself in their browser
-   - `respondWithDownload`: if 'true', the file will be downloaded in the user's browser
+   - `responseKind`: specifies what the service should respond with. It may be one of the following:
+
+     - `json` (default): will return a json object with a `resourceLink` and `downloadLink` that may be used to preview the resource or download the resource, respectively.
+     - `download`: will download the file to the browser that loaded the generate link
+     - `resource`: will return the file itself for preview in the browser
+     - `buffer`: will return the file as a buffer object. The shape of the response body is `{ buffer: Buffer }`
+
    - `fallbackUrl`: allows you to specify a url that accessors of the link will be shown when they try to access a link to a generated resource that is no longer available. Such a link could be to your custom page allowing the user to regenerate the resource, or directly be a link to regenerate the same resource with this service. Eg. https://html-to-file.herokuapp.com/generate?url=https://www.google.com?fallbackUrl=https://html-to-file.herokuapp.com/generate?url=https://www.google.com
    - `autoRegenerate`: defaults to 'true'. When 'true', the resource will be auto-regenerated for the user if it has been deleted or no longer exists. This functionality relies on the specific formatting of the file name. i.e `'htf_***_***.(png|pdf)'`
 
