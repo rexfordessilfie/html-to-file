@@ -1,11 +1,13 @@
 import * as puppeteer from "puppeteer";
-import { ensureFileExtension } from "./helpers";
+import { ensureFileExtension, removeEmptyValues } from "./helpers";
 import { HtmlToFileGenerator, GeneratorImageOptions } from "./types";
+import * as crypto from "crypto";
+
 export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
   static browser: puppeteer.Browser | null;
   static _instance: PuppeteerGeneratorSingleton;
 
-  page = {} as puppeteer.Page | undefined;
+  static pages = {} as Record<string, puppeteer.Page | null | undefined>;
 
   constructor() {
     if (!PuppeteerGeneratorSingleton.browser) {
@@ -29,15 +31,38 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     PuppeteerGeneratorSingleton.browser = null;
   }
 
-  async loadBrowserPage(url: string) {
-    this.page = await PuppeteerGeneratorSingleton.browser?.newPage();
-    await this.page?.goto(url, { waitUntil: "networkidle0" }); // Make sure content has finished loading on page
+  static generatePageId() {
+    return crypto.randomBytes(32).toString("hex");
+  }
+
+  static getPageById(pageId: string) {
+    return PuppeteerGeneratorSingleton.pages[pageId];
+  }
+
+  static async loadBrowserPage(url: string) {
+    const pageId = PuppeteerGeneratorSingleton.generatePageId();
+    PuppeteerGeneratorSingleton.pages[pageId] = null;
+
+    try {
+      const page = await PuppeteerGeneratorSingleton.browser?.newPage();
+      await page?.goto(url, { waitUntil: "networkidle0" }); // Make sure content has finished loading on page
+      PuppeteerGeneratorSingleton.pages[pageId] = page;
+    } catch (error) {
+      console.log(error);
+    }
+
+    return pageId;
   }
 
   /** Closes the browser page. (currently not in use since closing sometimes causes navigation errors) */
-  async closeBrowserPage() {
-    if (this.page) {
-      await this.page.close();
+  static async closeBrowserPage(pageId: string) {
+    const pageToClose = PuppeteerGeneratorSingleton.pages[pageId];
+    if (pageToClose) {
+      await pageToClose.close();
+      PuppeteerGeneratorSingleton.pages[pageId] = null;
+      console.log(`[PuppeteerGenerator] Closing browser page`, {
+        pageId,
+      });
     }
   }
 
@@ -49,8 +74,8 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     console.log("[PuppeteerGenerator] About to generate image...");
     const fileWithExtension = ensureFileExtension(filename, "png");
     try {
-      await this.loadBrowserPage(url);
-      const processedOptions = await this.processImageOptions(options);
+      const pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(url);
+      const processedOptions = await this.processImageOptions(options, pageId);
       const { target, ...screenshotOptions } = processedOptions;
       await target?.screenshot({
         path: fileWithExtension,
@@ -59,6 +84,7 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
       console.log("[PuppeteerGenerator] Done generating image", {
         fileWithExtension,
       });
+      await PuppeteerGeneratorSingleton.closeBrowserPage(pageId);
       return fileWithExtension;
     } catch (error) {
       throw error;
@@ -73,8 +99,9 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     console.log("[PuppeteerGenerator] About to generate pdf...");
     const fileWithExtension = ensureFileExtension(filename, "pdf");
     try {
-      await this.loadBrowserPage(url);
-      await this.page?.pdf({
+      const pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(url);
+      const page = PuppeteerGeneratorSingleton.getPageById(pageId);
+      await page?.pdf({
         path: fileWithExtension,
         ...options,
       });
@@ -87,16 +114,21 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
   }
 
   // Page must already be active before handling options
-  async processImageOptions(options: GeneratorImageOptions): Promise<any> {
+  async processImageOptions(
+    options: GeneratorImageOptions,
+    pageId: string
+  ): Promise<any> {
     console.log("[PuppeteerGenerator] Processing image options...");
     const { selector, width, height } = options;
     let processedOptions = {};
 
-    if (!this.page) {
+    const page = PuppeteerGeneratorSingleton.getPageById(pageId);
+
+    if (!page) {
       return {};
     }
 
-    const target = selector ? await this.page?.$(selector) : this.page;
+    const target = selector ? await page?.$(selector) : page;
     processedOptions = { ...processedOptions, target };
 
     if (width) {
@@ -108,16 +140,17 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     return processedOptions;
   }
 
-  async resizePage() {
-    // https://petertran.com.au/2018/07/12/blank-images-puppeteer-screenshots-solved/
-    // Resize the viewport to screenshot elements outside of the viewport
-    const newViewport = (await this.page?.$eval("body", (bodyHandle) => {
+  // https://petertran.com.au/2018/07/12/blank-images-puppeteer-screenshots-solved/
+  // Resize the viewport to screenshot elements outside of the viewport
+  async resizePage(pageId: string) {
+    const page = PuppeteerGeneratorSingleton.getPageById(pageId);
+    const newViewport = (await page?.$eval("body", (bodyHandle) => {
       const boundingBox = bodyHandle.getBoundingClientRect();
       return {
         width: Math.ceil(boundingBox.width),
         height: Math.ceil(boundingBox.height),
       };
     })) as puppeteer.Viewport;
-    await this.page?.setViewport(newViewport);
+    await page?.setViewport(newViewport);
   }
 }

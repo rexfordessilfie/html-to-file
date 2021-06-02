@@ -50,7 +50,6 @@ export const generateFilename = (
     autoRegenerate,
   });
 
-  console.log({ finalParams });
   const encryptedSerializedParams = encryptAndSerialize(
     JSON.stringify(finalParams)
   );
