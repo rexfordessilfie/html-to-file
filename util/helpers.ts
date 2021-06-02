@@ -3,11 +3,7 @@ import * as fs from "fs";
 export const deleteFile = (filePath: string) => {
   if (fs.existsSync(filePath)) {
     console.log("[Utils] Deleting file...", { filePath });
-    fs.unlink(filePath, (error) => {
-      if (error) {
-        console.log("File could not be deleted", error);
-      }
-    });
+    fs.unlinkSync(filePath);
   }
 };
 
@@ -26,20 +22,13 @@ export const ensureDirectoryExists = (dirName: string) => {
 
 export const parseUrl = (url: string) => {
   console.log("[Utils] Parsing url...", { url });
-  // const validUrlPattern = /^(http|https):\/\/www\..*\..*/;
-  // if (!validUrlPattern.test(url)) {
-  //   throw new Error(
-  //     "Invalid url. Expected url to match http(s)://www.domain.com"
-  //   );
-  // }
-  // const domain = url.split(".")[1] as string;
   const urlData = new URL(url);
-  return { host: urlData.host };
+  return { host: urlData.host, url };
 };
 
-export const generateFileNameFromUrl = (url: string): string => {
+export const generateFilename = ({ url }: { url: string }): string => {
   const { host } = parseUrl(url);
-  const fileName = `${host}${Date.now()}`;
+  const fileName = `${host}-${Date.now()}`;
   console.log("[Utils] Generated name for new file...", { fileName });
   // NB: the file extension will be added by the generator
   return fileName;
@@ -59,22 +48,30 @@ export const ensureFileExtension = (filename: string, ext: string) => {
   return filename;
 };
 
-export const getQueryString = (queryParams: Record<string, string> = {}) => {
+export const buildQueryString = (queryParams: Record<string, any> = {}) => {
   const paramPairs = Object.keys(queryParams).map((key) => {
+    if (!queryParams[key]) {
+      return;
+    }
     return `${key}=${queryParams[key]}`;
   });
 
-  const queryString = paramPairs.join("&");
+  const queryString = paramPairs
+    .filter((pair) => {
+      return !!pair;
+    })
+    .join("&");
   return queryString;
 };
 
-export const appendQueryParams = (
-  url: string,
-  params: Record<string, string> = {}
-) => {
-  const queryString = getQueryString(params);
-  if (url.includes("?")) {
-    return url + queryString;
+export const appendQueryString = (url: string, queryString: string) => {
+  if (!queryString) {
+    return url;
   }
-  return url + "?" + queryString;
+
+  if (!url.includes("?")) {
+    return url + "?" + queryString;
+  }
+
+  return url + "&" + queryString;
 };
