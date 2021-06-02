@@ -29,7 +29,8 @@ export type GeneratorParams = {
 };
 
 export interface GenerateEndpointQueryParams extends GeneratorParams {
-  respondWithResource?: boolean;
-  respondWithDownload?: boolean;
+  respondWithResource?: string;
+  respondWithDownload?: string;
+  autoRegenerate?: string;
   fallbackUrl?: string;
 }
