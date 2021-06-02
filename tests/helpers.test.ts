@@ -103,4 +103,11 @@ describe("appendQueryString", () => {
     const urlWithQueryString = appendQueryString(url, queryString);
     expect(urlWithQueryString).toBe(url + "&" + queryString);
   });
+
+  it("should return original url if no query string provided", () => {
+    const url = "https://www.blah.com?color=Blue";
+
+    const finalUrl = appendQueryString(url, "");
+    expect(finalUrl).toBe(url);
+  });
 });
