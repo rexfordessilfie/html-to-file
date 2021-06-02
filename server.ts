@@ -14,6 +14,7 @@ import {
 } from "./util/helpers";
 
 import { checkValidUrl } from "./middleware";
+import { GenerateEndpointQueryParams } from "./util/types";
 
 const PORT = process.env.PORT || 4000;
 const DUMP_DIRECTORY = path.resolve("./temp");
@@ -22,31 +23,41 @@ const PUBLIC_URL =
     ? process.env.PUBLIC_URL
     : `http://localhost:${PORT}`;
 
+const DEFAULT_GENERATE_ENDPOINT_QUERY: Partial<GenerateEndpointQueryParams> = {
+  respondWithResource: "false",
+  respondWithDownload: "false",
+  autoRegenerate: "true",
+  fallbackUrl: "",
+};
+
 const app = express();
 app.set("view engine", "ejs");
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 app.get("/template/:name", (req, res) => {
-  const name = req.params.name as string;
+  const templateName = req.params.name as string;
   const { fallbackUrl = "" } = req.query;
   const data = { fallbackUrl, baseUrl: PUBLIC_URL };
-  res.render(`templates/${name}`, data);
+  res.render(`templates/${templateName}`, data);
 });
 
 app.get("/generate", checkValidUrl, async (req, res) => {
   try {
-    const {
-      respondWithResource = "false",
-      respondWithDownload = "false",
-      fallbackUrl = "",
-    } = req.query;
+    const reqQuery = {
+      ...DEFAULT_GENERATE_ENDPOINT_QUERY,
+      ...req.query,
+    };
+
+    const { respondWithResource = "false", respondWithDownload = "false" } =
+      reqQuery;
+
     ensureDirectoryExists(DUMP_DIRECTORY);
 
     const fileGenerator = getFileGenerator();
     const { filename, absoluteFilePath } = await generateFile(
       fileGenerator,
-      req.query,
+      reqQuery,
       DUMP_DIRECTORY
     );
 
@@ -61,6 +72,7 @@ app.get("/generate", checkValidUrl, async (req, res) => {
       res.redirect(internalDownloadPath);
     } else {
       // Respond with JSON object
+      const { fallbackUrl } = reqQuery;
       const finalQueryString = buildQueryString({ fallbackUrl });
       const _resourceLink = `${PUBLIC_URL}${internalResourcePath}`;
       const _downloadLink = `${PUBLIC_URL}${internalDownloadPath}`;

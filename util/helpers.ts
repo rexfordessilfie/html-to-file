@@ -37,15 +37,20 @@ export const parseUrl = (url: string) => {
   return { host: urlData.host, url };
 };
 
-export const generateFilename = (params: GeneratorParams): string => {
-  const { url, selector, height, width, type } = params;
+export const generateFilename = (
+  params: GenerateEndpointQueryParams
+): string => {
+  const { url, selector, height, width, type, autoRegenerate } = params;
   const finalParams = removeEmptyValues({
     url,
     selector,
     height,
     width,
     type,
+    autoRegenerate,
   });
+
+  console.log({ finalParams });
   const encryptedSerializedParams = encryptAndSerialize(
     JSON.stringify(finalParams)
   );
@@ -57,7 +62,7 @@ export const generateFilename = (params: GeneratorParams): string => {
 
 export const extractParamsFromFilename = (
   filename: string
-): GeneratorParams => {
+): GenerateEndpointQueryParams => {
   if (!filename.startsWith("htf")) {
     return {} as GeneratorParams;
   }
@@ -117,11 +122,20 @@ export const handleSendFileCallback = async (
 
   try {
     const generatorParams = extractParamsFromFilename(filename);
+
+    if (
+      generatorParams.autoRegenerate &&
+      !unwrapTextBoolean(generatorParams.autoRegenerate)
+    ) {
+      // File creator explicitly asked to not regenerate file so abort early
+      throw new Error("Missing resource");
+    }
+
     if (generatorParams.url) {
       const generateEndpointQueryParams: GenerateEndpointQueryParams = {
         ...generatorParams,
-        respondWithResource: respondWithKind === "resource",
-        respondWithDownload: respondWithKind === "download",
+        respondWithResource: wrapTextBoolean(respondWithKind === "resource"),
+        respondWithDownload: wrapTextBoolean(respondWithKind === "download"),
         fallbackUrl: fallbackUrl as string,
       };
 
@@ -181,7 +195,7 @@ export const appendQueryString = (url: string, queryString: string) => {
 };
 
 export const removeEmptyValues = (obj: Object) => {
-  return _(obj).omitBy(_.isNull).omitBy(_.isUndefined);
+  return _(obj).omitBy(_.isNull).omitBy(_.isUndefined).value();
 };
 
 export const getFileGenerator = (): HtmlToFileGenerator => {
@@ -196,4 +210,8 @@ export const extractImageOptions = (obj: any) => {
 export const unwrapTextBoolean = (text: string) => {
   const _text = text.toLowerCase();
   return _text === "true";
+};
+
+export const wrapTextBoolean = (bool: boolean) => {
+  return bool ? "true" : "false";
 };
