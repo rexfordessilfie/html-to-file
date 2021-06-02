@@ -1,6 +1,7 @@
 import * as express from "express";
 import * as path from "path";
 import * as cors from "cors";
+import * as fs from "fs";
 
 import {
   appendQueryString,
@@ -10,7 +11,6 @@ import {
   generateFile,
   getFileGenerator,
   handleSendFileCallback,
-  unwrapTextBoolean,
 } from "./util/helpers";
 
 import { checkValidUrl } from "./middleware";
@@ -24,8 +24,7 @@ const PUBLIC_URL =
     : `http://localhost:${PORT}`;
 
 const DEFAULT_GENERATE_ENDPOINT_QUERY: Partial<GenerateEndpointQueryParams> = {
-  respondWithResource: "false",
-  respondWithDownload: "false",
+  responseKind: "json",
   autoRegenerate: "true",
   fallbackUrl: "",
 };
@@ -49,8 +48,7 @@ app.get("/generate", checkValidUrl, async (req, res) => {
       ...req.query,
     };
 
-    const { respondWithResource = "false", respondWithDownload = "false" } =
-      reqQuery;
+    const { responseKind = "json" } = reqQuery;
 
     ensureDirectoryExists(DUMP_DIRECTORY);
 
@@ -66,10 +64,13 @@ app.get("/generate", checkValidUrl, async (req, res) => {
     const internalResourcePath = `/resources/${filename}`;
     const internalDownloadPath = `/downloads/${filename}`;
 
-    if (unwrapTextBoolean(respondWithResource as string)) {
+    if (responseKind === "resource") {
       res.redirect(internalResourcePath);
-    } else if (unwrapTextBoolean(respondWithDownload as string)) {
+    } else if (responseKind === "download") {
       res.redirect(internalDownloadPath);
+    } else if (responseKind === "buffer") {
+      const buffer = fs.readFileSync(absoluteFilePath);
+      res.send({ buffer });
     } else {
       // Respond with JSON object
       const { fallbackUrl } = reqQuery;

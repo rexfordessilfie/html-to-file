@@ -109,7 +109,7 @@ export const handleSendFileCallback = async (
   req: Request,
   res: Response,
   error: Error,
-  respondWithKind: "resource" | "download"
+  responseKind: "resource" | "download"
 ) => {
   if (!error) {
     return;
@@ -134,8 +134,7 @@ export const handleSendFileCallback = async (
     if (generatorParams.url) {
       const generateEndpointQueryParams: GenerateEndpointQueryParams = {
         ...generatorParams,
-        respondWithResource: wrapTextBoolean(respondWithKind === "resource"),
-        respondWithDownload: wrapTextBoolean(respondWithKind === "download"),
+        responseKind,
         fallbackUrl: fallbackUrl as string,
       };
 

@@ -28,9 +28,10 @@ export type GeneratorParams = {
   width?: number;
 };
 
+export type ResponseKind = "resource" | "download" | "json" | "buffer";
+
 export interface GenerateEndpointQueryParams extends GeneratorParams {
-  respondWithResource?: string;
-  respondWithDownload?: string;
+  responseKind?: ResponseKind;
   autoRegenerate?: string;
   fallbackUrl?: string;
 }
