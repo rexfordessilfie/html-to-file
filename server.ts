@@ -3,11 +3,12 @@ import * as path from "path";
 import * as cors from "cors";
 
 import {
-  appendQueryParams,
+  appendQueryString,
+  buildQueryString,
   deleteFileAfterTimeout,
   ensureDirectoryExists,
   ensureFileExtension,
-  generateFileNameFromUrl,
+  generateFilename,
 } from "./util/helpers";
 import {
   extractImageOptions,
@@ -43,14 +44,14 @@ app.get("/generate", checkValidUrl, async (req, res) => {
       type = "image",
       respondWithResource = false,
       respondWithDownload = false,
-      fallBackUrl = "",
+      fallbackUrl = "",
     } = req.query;
     ensureDirectoryExists(DUMP_DIRECTORY);
 
     // Generate file name
     let fileGenerator: HtmlToFileGeneratorSingleton | HtmlToFileGenerator =
       new PuppeteerGeneratorSingleton();
-    const filename = generateFileNameFromUrl(url as string);
+    const filename = generateFilename({ url: url as string });
 
     let filePathNoExtension = path.join(DUMP_DIRECTORY, filename);
     let finalFilePath;
@@ -82,12 +83,18 @@ app.get("/generate", checkValidUrl, async (req, res) => {
     } else if (respondWithDownload) {
       res.redirect(internalDownloadPath);
     } else {
-      const redirectQuery = fallBackUrl ? `?fallBackUrl=${fallBackUrl}` : "";
+      const finalQueryString = buildQueryString({ fallbackUrl });
+      const _resourceLink = `${PUBLIC_URL}${internalResourcePath}`;
+      const _downloadLink = `${PUBLIC_URL}${internalDownloadPath}`;
+
+      const resourceLink = appendQueryString(_resourceLink, finalQueryString);
+      const downloadLink = appendQueryString(_downloadLink, finalQueryString);
+
       res.send({
         success: true,
         message: "File successfully generated!",
-        resourceLink: `${PUBLIC_URL}${internalResourcePath}${redirectQuery}`,
-        downloadLink: `${PUBLIC_URL}${internalDownloadPath}${redirectQuery}`,
+        resourceLink,
+        downloadLink,
       });
     }
   } catch (error) {
@@ -99,14 +106,16 @@ app.get("/generate", checkValidUrl, async (req, res) => {
 
 app.get("/resources/:name", (req, res) => {
   const name = req.params.name as string;
-  const { fallBackUrl = "" } = req.query;
+  const { fallbackUrl = "" } = req.query;
   const filePath = path.resolve(DUMP_DIRECTORY, name);
   try {
     res.sendFile(filePath, (error) => {
-      if (error && fallBackUrl) {
-        const finalUrl = appendQueryParams("/template/resource-not-found", {
-          fallBackUrl: fallBackUrl as string,
-        });
+      if (error && fallbackUrl) {
+        const finalQueryString = buildQueryString({ fallbackUrl });
+        const finalUrl = appendQueryString(
+          "/template/resource-not-found",
+          finalQueryString
+        );
         res.redirect(finalUrl);
         return;
       }
@@ -126,9 +135,11 @@ app.get("/downloads/:name", (req, res) => {
   try {
     res.download(filePath, (error) => {
       if (error && fallbackUrl) {
-        const finalUrl = appendQueryParams("/template/resource-not-found", {
-          fallbackUrl: fallbackUrl as string,
-        });
+        const finalQueryString = buildQueryString({ fallbackUrl });
+        const finalUrl = appendQueryString(
+          "/template/resource-not-found",
+          finalQueryString
+        );
         res.redirect(finalUrl);
         return;
       }
