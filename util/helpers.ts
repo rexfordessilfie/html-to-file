@@ -50,14 +50,25 @@ export const ensureFileExtension = (filename: string, ext: string) => {
 
 export const buildQueryString = (queryParams: Record<string, any> = {}) => {
   const paramPairs = Object.keys(queryParams).map((key) => {
+    if (!queryParams[key]) {
+      return;
+    }
     return `${key}=${queryParams[key]}`;
   });
 
-  const queryString = paramPairs.join("&");
+  const queryString = paramPairs
+    .filter((pair) => {
+      return !!pair;
+    })
+    .join("&");
   return queryString;
 };
 
 export const appendQueryString = (url: string, queryString: string) => {
+  if (!queryString) {
+    return url;
+  }
+
   if (!url.includes("?")) {
     return url + "?" + queryString;
   }
