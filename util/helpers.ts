@@ -8,6 +8,7 @@ import {
   GenerateEndpointQueryParams,
   GeneratorImageOptions,
   GeneratorParams,
+  HtmlSourceKind,
   HtmlToFileGenerator,
 } from "./types";
 
@@ -40,19 +41,21 @@ export const parseUrl = (url: string) => {
 export const generateFilename = (
   params: GenerateEndpointQueryParams
 ): string => {
-  const { url, selector, height, width, type, autoRegenerate } = params;
-  const finalParams = removeEmptyValues({
-    url,
-    selector,
-    height,
-    width,
-    type,
-    autoRegenerate,
-  });
+  // Files generated using html will not be re-generable
+  // Also do not include html content in the file name
+  // TODO: store information to generate the file in a database
+  if (params.html) {
+    params.autoRegenerate = "";
+    params.html = "";
+  }
+
+  const finalParams: Partial<GenerateEndpointQueryParams> =
+    removeEmptyValues(params);
 
   const encryptedSerializedParams = encryptAndSerialize(
     JSON.stringify(finalParams)
   );
+
   const filename = `htf_${encryptedSerializedParams}`;
   extractParamsFromFilename(filename);
   console.log("[Utils] Generated name for new file...", { filename });
@@ -78,10 +81,10 @@ export const extractParamsFromFilename = (
 
 export const generateFile = async (
   fileGenerator: HtmlToFileGenerator,
-  params: any,
+  params: GenerateEndpointQueryParams,
   fileDestinationDir: string
 ) => {
-  const { type = "image", url } = params as GeneratorParams;
+  const { type = "image", url, html } = params as GeneratorParams;
 
   const extensions = {
     image: "png",
@@ -92,11 +95,31 @@ export const generateFile = async (
   const filename = ensureFileExtension(rawFilename, extensions[type]);
   const absoluteFilePath = path.join(fileDestinationDir, filename);
 
+  let source = "";
+  let sourceKind: HtmlSourceKind = "url";
+
+  if (url) {
+    source = url;
+    sourceKind = "url";
+  } else if (html) {
+    source = html;
+    sourceKind = "html";
+  }
+
+  if (!source) {
+    throw new Error("No URL or HTML string was provided");
+  }
+
   if (type === "image") {
     const imageOptions = extractImageOptions(params);
-    await fileGenerator.generateImage(url, absoluteFilePath, imageOptions);
+    await fileGenerator.generateImage(
+      source,
+      sourceKind,
+      absoluteFilePath,
+      imageOptions
+    );
   } else if (type === "pdf") {
-    await fileGenerator.generatePdf(url, absoluteFilePath);
+    await fileGenerator.generatePdf(source, sourceKind, absoluteFilePath);
   } else {
     throw new Error("Unrecognized file type");
   }
@@ -111,6 +134,8 @@ export const handleSendFileCallback = async (
   responseKind: "resource" | "download"
 ) => {
   if (!error) {
+    // If no error occurred then the file was found successfully so return control back to
+    // endpoint handler
     return;
   }
 
@@ -121,16 +146,16 @@ export const handleSendFileCallback = async (
 
   try {
     const generatorParams = extractParamsFromFilename(filename);
-
+    console.log(generatorParams);
     if (
-      generatorParams.autoRegenerate &&
+      !generatorParams.autoRegenerate ||
       !unwrapTextBoolean(generatorParams.autoRegenerate)
     ) {
-      // File creator explicitly asked to not regenerate file so abort early
+      // File creator asked to not regenerate file so abort early
       throw new Error("Missing resource");
     }
 
-    if (generatorParams.url) {
+    if (generatorParams.url || generatorParams.html) {
       const generateEndpointQueryParams: GenerateEndpointQueryParams = {
         ...generatorParams,
         responseKind,
@@ -192,8 +217,8 @@ export const appendQueryString = (url: string, queryString: string) => {
   return url + "&" + queryString;
 };
 
-export const removeEmptyValues = (obj: Object) => {
-  return _(obj).omitBy(_.isNull).omitBy(_.isUndefined).value();
+export const removeEmptyValues = <T>(obj: Object): Partial<T> => {
+  return _(obj).omitBy(_.isNull).omitBy(_.isUndefined).value() as T;
 };
 
 export const getFileGenerator = (): HtmlToFileGenerator => {
@@ -212,4 +237,9 @@ export const unwrapTextBoolean = (text: string) => {
 
 export const wrapTextBoolean = (bool: boolean) => {
   return bool ? "true" : "false";
+};
+
+export const isValidUrl = (url: string) => {
+  const validUrlPattern = /^(http|https):\/\//;
+  return !!validUrlPattern.test(url);
 };

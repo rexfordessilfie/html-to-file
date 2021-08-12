@@ -8,20 +8,22 @@ export interface GeneratorPdfOptions {}
 
 export interface HtmlToFileGenerator {
   generateImage(
-    url: string,
+    source: string,
+    sourceKind: HtmlSourceKind,
     destination: string,
     options?: GeneratorImageOptions
   ): Promise<string>;
 
   generatePdf(
-    url: string,
+    source: string,
     destination: string,
     options?: GeneratorPdfOptions
   ): Promise<string>;
 }
 
 export type GeneratorParams = {
-  url: string;
+  url?: string;
+  html?: string;
   type: "image" | "pdf";
   selector: string;
   height?: number;
@@ -35,3 +37,5 @@ export interface GenerateEndpointQueryParams extends GeneratorParams {
   autoRegenerate?: string;
   fallbackUrl?: string;
 }
+
+export type HtmlSourceKind = "url" | "html";
