@@ -1,8 +1,9 @@
+import { isValidUrl } from "../util/helpers";
+
 export const checkValidUrl = (req: any, res: any, next: Function) => {
   const { url } = req.query;
-  const validUrlPattern = /^(http|https):\/\//;
   try {
-    if (!validUrlPattern.test(url)) {
+    if (!isValidUrl(url)) {
       console.log("[Middleware] Invalid url received", { url });
       throw "Invalid url protocol. Expected url to have protocol, https:// or http://";
     }

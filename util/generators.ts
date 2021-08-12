@@ -1,6 +1,10 @@
 import * as puppeteer from "puppeteer";
-import { ensureFileExtension, removeEmptyValues } from "./helpers";
-import { HtmlToFileGenerator, GeneratorImageOptions } from "./types";
+import { ensureFileExtension } from "./helpers";
+import {
+  HtmlToFileGenerator,
+  GeneratorImageOptions,
+  HtmlSourceKind,
+} from "./types";
 import * as crypto from "crypto";
 
 export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
@@ -39,13 +43,20 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     return PuppeteerGeneratorSingleton.pages[pageId];
   }
 
-  static async loadBrowserPage(url: string) {
+  static async loadBrowserPage(source: string, sourceKind: HtmlSourceKind) {
     const pageId = PuppeteerGeneratorSingleton.generatePageId();
     PuppeteerGeneratorSingleton.pages[pageId] = null;
 
     try {
       const page = await PuppeteerGeneratorSingleton.browser?.newPage();
-      await page?.goto(url, { waitUntil: "networkidle0" }); // Make sure content has finished loading on page
+
+      if (sourceKind == "url") {
+        await page?.goto(source, { waitUntil: "networkidle0" }); // Make sure content has finished loading on page
+      } else if (sourceKind == "html") {
+        await page?.setContent(source);
+      } else {
+        throw new Error("Unrecognized source kind");
+      }
       PuppeteerGeneratorSingleton.pages[pageId] = page;
     } catch (error) {
       console.log(error);
@@ -67,14 +78,18 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
   }
 
   async generateImage(
-    url: string,
+    source: string,
+    sourceKind: HtmlSourceKind,
     filename: string,
     options: any = {}
   ): Promise<string> {
     console.log("[PuppeteerGenerator] About to generate image...");
     const fileWithExtension = ensureFileExtension(filename, "png");
     try {
-      const pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(url);
+      const pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(
+        source,
+        sourceKind
+      );
       const processedOptions = await this.processImageOptions(options, pageId);
       const { target, ...screenshotOptions } = processedOptions;
       await target?.screenshot({
@@ -92,14 +107,18 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
   }
 
   async generatePdf(
-    url: string,
+    source: string,
+    sourceKind: HtmlSourceKind,
     filename: string,
     options: any = {}
   ): Promise<string> {
     console.log("[PuppeteerGenerator] About to generate pdf...");
     const fileWithExtension = ensureFileExtension(filename, "pdf");
     try {
-      const pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(url);
+      const pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(
+        source,
+        sourceKind
+      );
       const page = PuppeteerGeneratorSingleton.getPageById(pageId);
       await page?.pdf({
         path: fileWithExtension,

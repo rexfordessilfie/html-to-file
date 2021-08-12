@@ -6,6 +6,7 @@ import {
   ensureFileExtension,
   buildQueryString,
   appendQueryString,
+  isValidUrl,
 } from "../util/helpers";
 
 describe("deleteFile", () => {
@@ -109,5 +110,17 @@ describe("appendQueryString", () => {
 
     const finalUrl = appendQueryString(url, "");
     expect(finalUrl).toBe(url);
+  });
+});
+
+describe("isValidUrl", () => {
+  it("should return true on valid url", () => {
+    const validUrl = "https://www.google.com";
+    expect(isValidUrl(validUrl)).toBe(true);
+  });
+
+  it("should return false on invalid url", () => {
+    const invalidUrl = "www.google.com";
+    expect(isValidUrl(invalidUrl)).toBe(false);
   });
 });
