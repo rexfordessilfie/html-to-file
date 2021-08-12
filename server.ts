@@ -13,7 +13,6 @@ import {
   handleSendFileCallback,
 } from "./util/helpers";
 
-import { checkValidUrl } from "./middleware";
 import { GenerateEndpointQueryParams } from "./util/types";
 
 const PORT = process.env.PORT || 4000;
@@ -41,7 +40,7 @@ app.get("/template/:name", (req, res) => {
   res.render(`templates/${templateName}`, data);
 });
 
-app.get("/generate", checkValidUrl, async (req, res) => {
+app.get("/generate", async (req, res) => {
   try {
     const reqQuery = {
       ...DEFAULT_GENERATE_ENDPOINT_QUERY,
@@ -55,7 +54,7 @@ app.get("/generate", checkValidUrl, async (req, res) => {
     const fileGenerator = getFileGenerator();
     const { filename, absoluteFilePath } = await generateFile(
       fileGenerator,
-      reqQuery,
+      reqQuery as GenerateEndpointQueryParams,
       DUMP_DIRECTORY
     );
 
