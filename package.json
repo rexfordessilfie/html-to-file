@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "postinstall": "npm run build",
-    "test": "NODE_PATH=$PWD jest",
+    "test": "jest",
     "coverage": "jest --coverage",
     "build": "tsc",
     "start": "NODE_PATH=$PWD node ./dist/server/server.js",
