@@ -1,15 +1,11 @@
-import { setupTestApp } from "./setup";
 import * as request from "supertest";
-import * as fs from "fs";
-import * as path from "path";
 import { PORT } from "../../util/constants";
+import { app as testApp } from "../../app";
 
 describe("test-generate-routes", () => {
-  const testApp = setupTestApp();
-
   it("GET /generate - should generate pdf given valid url", async () => {
     const { body } = await request(testApp).get(
-      "/generate?url=https://www.google.com&type=pdf"
+      "/generate?url=https://www.google.com"
     );
     // Check that relevant information was returned
     expect(body).toHaveProperty("resourceLink");
