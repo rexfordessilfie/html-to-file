@@ -8,7 +8,6 @@ jest.mock("../../util/helpers", () => {
   // Mock deleteFileAfterTimeout to delete files immediately
   jest.unmock("../../util/helpers");
   const actualHelpers = jest.requireActual("../../util/helpers");
-  console.log(actualHelpers);
   return {
     ...jest.requireActual("../../util/helpers"),
     deleteFileAfterTimeout: jest.fn(() => {
