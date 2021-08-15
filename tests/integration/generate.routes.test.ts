@@ -2,6 +2,20 @@ import * as request from "supertest";
 import { PORT } from "../../util/constants";
 import { app as testApp } from "../../app";
 
+import "../../util/helpers";
+
+jest.mock("../../util/helpers", () => {
+  // Mock deleteFileAfterTimeout to delete files immediately
+  jest.unmock("../../util/helpers");
+  const actualHelpers = jest.requireActual("../../util/helpers");
+  console.log(actualHelpers);
+  return {
+    ...jest.requireActual("../../util/helpers"),
+    deleteFileAfterTimeout: jest.fn(() => {
+      actualHelpers.deleteFile();
+    }),
+  };
+});
 describe("test-generate-routes", () => {
   it("GET /generate - should generate pdf given valid url", async () => {
     const { body } = await request(testApp).get(
