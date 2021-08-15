@@ -29,6 +29,7 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     PuppeteerGeneratorSingleton.browser = await puppeteer.launch({
       // should allow puppeteer to work in heroku
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: true,
     });
   }
 
