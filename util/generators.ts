@@ -14,17 +14,22 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
   static pages = {} as Record<string, puppeteer.Page | null | undefined>;
 
   constructor() {
-    if (!PuppeteerGeneratorSingleton.browser) {
-      PuppeteerGeneratorSingleton.setUp();
+    if (!PuppeteerGeneratorSingleton._instance) {
       PuppeteerGeneratorSingleton._instance = this;
     }
     return PuppeteerGeneratorSingleton._instance;
   }
 
-  static async setUp() {
+  static async setUpBrowser() {
+    // TODO: manage multiple browsers
+    if (PuppeteerGeneratorSingleton.browser) {
+      return;
+    }
+
     PuppeteerGeneratorSingleton.browser = await puppeteer.launch({
       // should allow puppeteer to work in heroku
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: true,
     });
   }
 
@@ -48,6 +53,7 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     PuppeteerGeneratorSingleton.pages[pageId] = null;
 
     try {
+      await PuppeteerGeneratorSingleton.setUpBrowser();
       const page = await PuppeteerGeneratorSingleton.browser?.newPage();
 
       if (sourceKind == "url") {
@@ -66,14 +72,32 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
   }
 
   /** Closes the browser page. (currently not in use since closing sometimes causes navigation errors) */
-  static async closeBrowserPage(pageId: string) {
+  static async closeBrowserPage(pageId: string | null) {
+    if (!pageId) {
+      return;
+    }
+
     const pageToClose = PuppeteerGeneratorSingleton.pages[pageId];
+
     if (pageToClose) {
       await pageToClose.close();
       PuppeteerGeneratorSingleton.pages[pageId] = null;
       console.log(`[PuppeteerGenerator] Closing browser page`, {
         pageId,
       });
+    }
+
+    await PuppeteerGeneratorSingleton.tearDownBrowserIfInactive();
+  }
+
+  static async tearDownBrowserIfInactive() {
+    const openPages = Object.values(PuppeteerGeneratorSingleton.pages).filter(
+      (page) => !!page
+    );
+    const allPagesClosed = openPages.length == 0;
+
+    if (allPagesClosed) {
+      await PuppeteerGeneratorSingleton.tearDown();
     }
   }
 
@@ -83,10 +107,11 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     filename: string,
     options: any = {}
   ): Promise<string> {
+    let pageId = null;
     console.log("[PuppeteerGenerator] About to generate image...");
     const fileWithExtension = ensureFileExtension(filename, "png");
     try {
-      const pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(
+      pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(
         source,
         sourceKind
       );
@@ -99,10 +124,11 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
       console.log("[PuppeteerGenerator] Done generating image", {
         fileWithExtension,
       });
-      await PuppeteerGeneratorSingleton.closeBrowserPage(pageId);
       return fileWithExtension;
     } catch (error) {
       throw error;
+    } finally {
+      await PuppeteerGeneratorSingleton.closeBrowserPage(pageId);
     }
   }
 
@@ -112,10 +138,11 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     filename: string,
     options: any = {}
   ): Promise<string> {
+    let pageId = null;
     console.log("[PuppeteerGenerator] About to generate pdf...");
     const fileWithExtension = ensureFileExtension(filename, "pdf");
     try {
-      const pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(
+      pageId = await PuppeteerGeneratorSingleton.loadBrowserPage(
         source,
         sourceKind
       );
@@ -126,9 +153,12 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
       });
       console.log("[PuppeteerGenerator] Done generating pdf."),
         { fileWithExtension };
+
       return fileWithExtension;
     } catch (error) {
       throw error;
+    } finally {
+      await PuppeteerGeneratorSingleton.closeBrowserPage(pageId);
     }
   }
 
