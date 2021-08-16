@@ -97,7 +97,7 @@ export class PuppeteerGeneratorSingleton implements HtmlToFileGenerator {
     const allPagesClosed = openPages.length == 0;
 
     if (allPagesClosed) {
-      PuppeteerGeneratorSingleton.tearDown();
+      await PuppeteerGeneratorSingleton.tearDown();
     }
   }
 

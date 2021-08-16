@@ -4,9 +4,6 @@ import { app as testApp } from "../../app";
 
 import "../../util/helpers";
 
-// Test timeout to 10s to prevent failure because of timeout
-jest.setTimeout(10000);
-
 jest.mock("../../util/helpers", () => {
   // Mock deleteFileAfterTimeout to delete files immediately
   jest.unmock("../../util/helpers");
@@ -18,6 +15,7 @@ jest.mock("../../util/helpers", () => {
     }),
   };
 });
+
 describe("test-generate-routes", () => {
   it("GET /generate - should generate pdf given valid url", async () => {
     const { body } = await request(testApp).get(
