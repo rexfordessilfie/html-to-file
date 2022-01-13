@@ -17,7 +17,6 @@
   </body>
   <script>
     const myBaseUrl = document.getElementById('url-div').dataset.url
-    console.log(myBaseUrl)
     const paramString = window.location.href.split('?')[1]
     const messageElement = document.getElementById('message')
     messageElement.innerText = 'Your image is loading...'                 
@@ -25,10 +24,8 @@
     const image = fetch(`${myBaseUrl}/generate/?${paramString}`).then(response => {
         return response.json()
     }).then(data => {
-      console.log(data)
       if (data.success){
         messageElement.innerText = 'Your image is ready!'
-        console.log(data)
         let imgElement = document.getElementById('my-img')
         imgElement.src = data.resourceLink
       }
