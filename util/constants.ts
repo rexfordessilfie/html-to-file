@@ -15,6 +15,6 @@ export const DUMP_DIRECTORY = path.resolve(ROOT_DIR, "temp");
 export const DEFAULT_GENERATE_ENDPOINT_QUERY: Partial<GenerateEndpointQueryParams> =
   {
     responseKind: "json",
-    autoRegenerate: "true",
+    autoRegenerate: "false",
     fallbackUrl: "",
   };

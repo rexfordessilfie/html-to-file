@@ -49,8 +49,13 @@ export const generateFilename = (
     params.html = "";
   }
 
-  const finalParams: Partial<GenerateEndpointQueryParams> =
-    removeEmptyValues(params);
+  const shouldAutoRegenerate = unwrapTextBoolean(
+    params.autoRegenerate || "false"
+  );
+
+  const finalParams: Partial<GenerateEndpointQueryParams> = shouldAutoRegenerate
+    ? removeEmptyValues(params)
+    : {};
 
   const encryptedSerializedParams = encryptAndSerialize(
     JSON.stringify(finalParams)
