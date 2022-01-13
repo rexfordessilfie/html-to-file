@@ -25,6 +25,7 @@
     const image = fetch(`${myBaseUrl}/generate/?${paramString}`).then(response => {
         return response.json()
     }).then(data => {
+      console.log(data)
       if (data.success){
         messageElement.innerText = 'Your image is ready!'
         console.log(data)
